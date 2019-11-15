@@ -5,8 +5,10 @@ let should = require('should');
 let exp = require('../');
 
 let services = [
-    'imageCensor',
+    'contentCensor',
+    'bodyanalysis',
     'imageSearch',
+    'imageProcess',
     'imageClassify',
     'face',
     'ocr',

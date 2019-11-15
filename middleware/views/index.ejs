@@ -87,33 +87,34 @@
     <div class="control">
         <span class="open">开启摄像头</span>
         <span class="recognition">人脸识别</span>
+        <span class="detectPerson">年龄分析</span>
+        <span class="add">新增人脸库</span>
+        <span class="search">查找人脸</span>
+        <span class="refresh">刷新</span>
         <span class="close">关闭摄像头</span>
     </div>
 </div>
 <script>
-    /*
-          从前台到后台的人脸识别
-            1.开启摄像头
-                1)window.navigator
-            2.同步到video的src
-                对象=> window.URL =>blob
-                1)解析视频流为blob 添加到 src
-            3.canvas创建视频片段照片
-            4.
-    */
+    let open = document.querySelector('.open');
+    let capture = document.querySelector('.capture');
+    let recognition = document.querySelector('.recognition');
+    let detectPerson = document.querySelector('.detectPerson');
+    let add = document.querySelector('.add');
+    let search = document.querySelector('.search');
+    let refresh = document.querySelector('.refresh');
 
-    var open = document.querySelector('.open');
-    var capture = document.querySelector('.capture');
-    var recognition = document.querySelector('.recognition');
-
-    var close = document.querySelector('.close');
-    var notice = document.querySelector('.notice');
-    var canvas = document.querySelector('.draw_img');
-    var context = canvas.getContext('2d');
-    var buffer;
+    let close = document.querySelector('.close');
+    let notice = document.querySelector('.notice');
+    let canvas = document.querySelector('.draw_img');
+    let context = canvas.getContext('2d');
+    let buffer;
 
     open.onclick = invokingCamera;
-    recognition.onclick = screenShot;
+    recognition.onclick = matchScreenShot;
+    detectPerson.onclick = detectScreenShot;
+    add.onclick = addHandle;
+    search.onclick = searchHandle;
+    refresh.onclick = refreshHandle;
     close.onclick = function () {
         //console.log(buffer);
         buffer && buffer.getTracks()[0].stop();
@@ -145,20 +146,59 @@
         }
     }
 
-    function screenShot() {
+    function matchScreenShot() {
         msg('正在检测,请稍后~~~', '#c665ff');
         context.drawImage(capture,0,0,200,150);
         new Post({
-            url: '/judge',
-            data:canvas.toDataURL('image/png'),
+            url: '/match',
+            data: {img: canvas.toDataURL('image/png')},
             success: function (res) {
-                console.log(res); //服务器发送的消息
-                res = JSON.parse(res).result.score;
-                console.log(typeof res);
+                res = res.result.score;
                 if (res > 85) {
                     msg('欢迎主人~', '#7ef6c7');
                 } else {
                     msg('丑拒~~', '#f10d0f');
+                }
+            }
+        })
+    }
+
+    function detectScreenShot() {
+        msg('正在检测,请稍后~~~', '#c665ff');
+        context.drawImage(capture,0,0,200,150);
+        new Post({
+            url: '/detect',
+            data: {img: canvas.toDataURL('image/png')},
+            success: function (res) {
+                const age = res.result.face_list[0].age;
+                msg('年龄分析: ' + age + ' 岁', '#7ef6c7');
+            }
+        })
+    }
+
+    function addHandle() {
+        msg('更新人脸库~~~', '#c665ff');
+        context.drawImage(capture,0,0,200,150);
+        new Post({
+            url: '/add',
+            data: {img: canvas.toDataURL('image/png'), group_id: '1', user_id: '1', user_info: '{name: "yuxiaoguang", age: 28, sex: "male"}'},
+            success: function (res) {
+                if(res.error_code ==0 && res.error_msg == 'SUCCESS'){
+                    msg('新增成功', '#7ef6c7');
+                }
+            }
+        })
+    }
+
+    function searchHandle() {
+        msg('正在查找人脸库~~~', '#c665ff');
+        context.drawImage(capture,0,0,200,150);
+        new Post({
+            url: '/search',
+            data: {img: canvas.toDataURL('image/png'), group_id_list: 'Middleware_Product'},
+            success: function (res) {
+                if(res.error_code ==0 && res.error_msg == 'SUCCESS'){
+                    alert(res.result.user_list[0].user_info);
                 }
             }
         })
@@ -173,35 +213,53 @@
         this.init(opt);
     }
 
+    function refreshHandle() {
+        new Post({
+            url: '/access',
+            data:'',
+        });
+    }
+
     Post.prototype = {
-        init: function (opt) {  //初始化 参数 URL地址 Data参数 method方式
+        init: function (opt) {
             this.url = opt.url || '';
             this.data = opt.data || {};
             this.method = 'POST';
-            this.async = true;//异步
-            this.success = opt.success || function () {  //回调函数
+            this.async = true;
+            this.success = opt.success || function () {
+
+            }
+            this.fail = opt.fail || function (error) {
+                alert('【' + error.error_code + '】'+ error.error_msg);
             }
             this.xhr();
         },
         xhr: function () {
-            var that = this;
-            var xhr = new XMLHttpRequest();//ajax对象实例化
-            console.log(this.data)
-            //请求的类型  请求地址 异步或者同步
+            let that = this;
+            let xhr = new XMLHttpRequest();
             xhr.open(this.method, this.url, this.async);
-            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded;charset=utf-8'); //表头
-            xhr.send('img='+this.data);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded;charset=utf-8');
+            let queryStr = [];
+            for(d in this.data){
+                queryStr.push(d + '=' + this.data[d]);
+            }
+            xhr.send(queryStr.join('&'));
             xhr.onreadystatechange = function (ev) {
+                let result = {};
+                if(xhr.response && typeof xhr.response === 'string') result = JSON.parse(xhr.response);
                 if (xhr.status === 200 && xhr.readyState === 4) {
-                    this.success(xhr.response);//回调数据
+                    if(result && result.error_code > 0) return this.fail(result);
+                    this.success(result);
                 }
             }.bind(this);
         }
     }
+
     new Post({
         url: '/access',
         data:'',
-    })
+    });
+
 </script>
 </body>
 </html>

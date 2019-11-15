@@ -1,78 +1,29 @@
 var https = require('https')
-var qs = require('querystring')
-var path = require('path')
+const express = require('express');
+var fs = require('fs');
+const path = require('path');
+const app = express();
+const compression = require('compression');
 
-var express = require('express')
-var app = express()
-var fs = require('fs')
-var bodyParser = require('body-parser')
+const favicon = require('serve-favicon');
+const bodyParser = require('body-parser');
+require('body-parser-xml')(bodyParser);
 
-var access_token = ''
+app.use(compression());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: false}));
+app.use(express.static(path.join(__dirname, 'middleware/public')));
 
-const param = qs.stringify({
-    'grant_type': 'client_credentials',
-    'client_id': 'j0gZXDbA93vZOnnI56T3w8oA',
-    'client_secret': 'ESEgs6t15Ex7HAG1hfz8f4s76d9yfgnF'
-})
+app.use(favicon(path.join(__dirname, 'middleware/public/favicon.ico')));
+app.set('views', path.join(__dirname, 'middleware/views'));
+app.set('view engine', 'ejs');
 
-var bitmap = fs.readFileSync('./images/005.png')
+const home = require('./middleware/routes/home');
 
-var base64str1 = new Buffer(bitmap).toString('base64')
+app.use('/', home);
 
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true }));
 
-app.use(bodyParser.urlencoded({limit: '50mb', extended: true }))
-
-
-app.use(express.static('faceid'))
-
-app.post('/access', function (req, res) {
-    https.get(
-        {
-            hostname: 'aip.baidubce.com',
-            path: '/oauth/2.0/token?' + param,
-            agent: false
-        },
-        function (res) {
-            res.setEncoding('utf8')
-            res.on('data',function (data) {
-                access_token = JSON.parse(data).access_token
-            })
-        }
-    )
-})
-
-
-app.post('/judge', function (req, res) {
-    let  options = {
-        host: 'aip.baidubce.com',
-        path: '/rest/2.0/face/v3/match?access_token="'+access_token+'"',
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        }
-    }
-    let contents = JSON.stringify([
-        {
-            image: base64str1,
-            image_type: "BASE64",
-        }, {
-            image: req.body.img.replace(/\s/g, "+").replace(/^data:image\/\w+\Wbase64,/, ""),
-            image_type: "BASE64",
-        }
-    ])
-
-    let req_baidu = https.request(options, function (res_baidu) {
-        res_baidu.setEncoding('utf8')
-        res_baidu.on('data', function (chunk) {
-            res.send(chunk)
-        })
-
-    })
-    req_baidu.write(contents)
-    req_baidu.end()
-
-})
-
-var server = app.listen(3302, function () {
+app.listen(3302, () => {
     console.log('listening at http://%s','localhost:3302');
-})
+});

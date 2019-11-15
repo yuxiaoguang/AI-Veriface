@@ -1,0 +1,43 @@
+{
+    "appenders": {
+      "access": {
+        "type": "dateFile",
+        "filename": "../../logs/AI-Veriface-access.log",
+        "pattern": "-yyyy-MM-dd",
+        "category": "http"
+      },
+      "app": {
+        "type": "file",
+        "filename": "../../logs/AI-Veriface-app.log",
+        "maxLogSize": 10240000,
+        "numBackups": 100
+      },
+      "errorFile": {
+        "type": "file",
+        "filename": "../../logs/AI-Veriface-errors.log",
+        "maxLogSize": 20480000,
+        "numBackups": 50
+      },
+      "errors": {
+        "type": "logLevelFilter",
+        "level": "ERROR",
+        "appender": "errorFile"
+      },
+      "perf": {
+        "type": "file",
+        "filename": "../../logs/AI-Veriface-perf.log",
+        "maxLogSize": 10240000,
+        "numBackups": 100,
+        "layout": {
+          "type": "pattern",
+          "pattern": "%d %m"
+        },
+        "category": "perf"
+      }
+    },
+    "categories": {
+      "default": { "appenders": [ "app", "errors" ], "level": "DEBUG" },
+      "http": { "appenders": [ "access"], "level": "DEBUG" },
+      "perf": { "appenders": [ "perf"], "level": "DEBUG" }
+    }
+  }

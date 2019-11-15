@@ -25,6 +25,7 @@ const objectTools = require('./util/objectTools');
 
 const METHOD_POST = 'POST';
 
+const ADVANCED_GENERAL_PATH = '/rest/2.0/image-classify/v2/advanced_general';
 const DISH_DETECT_PATH = '/rest/2.0/image-classify/v2/dish';
 const CAR_DETECT_PATH = '/rest/2.0/image-classify/v1/car';
 const LOGO_SEARCH_PATH = '/rest/2.0/image-classify/v2/logo';
@@ -33,6 +34,7 @@ const LOGO_DELETE_PATH = '/rest/2.0/realtime_search/v1/logo/delete';
 const ANIMAL_DETECT_PATH = '/rest/2.0/image-classify/v1/animal';
 const PLANT_DETECT_PATH = '/rest/2.0/image-classify/v1/plant';
 const OBJECT_DETECT_PATH = '/rest/2.0/image-classify/v1/object_detect';
+const LANDMARK_PATH = '/rest/2.0/image-classify/v1/landmark';
 
 
 /**
@@ -59,12 +61,31 @@ class AipImageClassify extends BaseClient {
     }
 
     /**
+     * 通用物体识别接口
+     *
+     * @param {string} image - 图像数据，base64编码，要求base64编码后大小不超过4M，最短边至少15px，最长边最大4096px,支持jpg/png/bmp格式
+     * @param {Object} options - 可选参数对象，key: value都为string类型
+     * @description options - options列表:
+     *   baike_num 返回百科信息的结果数，默认不返回
+     * @return {Promise} - 标准Promise对象
+     */
+    advancedGeneral(image, options) {
+        let param = {
+            image: image,
+            targetPath: ADVANCED_GENERAL_PATH
+        };
+        return this.commonImpl(objectTools.merge(param, options));
+    }
+
+    /**
      * 菜品识别接口
      *
      * @param {string} image - 图像数据，base64编码，要求base64编码后大小不超过4M，最短边至少15px，最长边最大4096px,支持jpg/png/bmp格式
      * @param {Object} options - 可选参数对象，key: value都为string类型
      * @description options - options列表:
      *   top_num 返回预测得分top结果数，默认为5
+     *   filter_threshold 默认0.95，可以通过该参数调节识别效果，降低非菜识别率.
+     *   baike_num 返回百科信息的结果数，默认不返回
      * @return {Promise} - 标准Promise对象
      */
     dishDetect(image, options) {
@@ -82,6 +103,7 @@ class AipImageClassify extends BaseClient {
      * @param {Object} options - 可选参数对象，key: value都为string类型
      * @description options - options列表:
      *   top_num 返回预测得分top结果数，默认为5
+     *   baike_num 返回百科信息的结果数，默认不返回
      * @return {Promise} - 标准Promise对象
      */
     carDetect(image, options) {
@@ -166,6 +188,7 @@ class AipImageClassify extends BaseClient {
      * @param {Object} options - 可选参数对象，key: value都为string类型
      * @description options - options列表:
      *   top_num 返回预测得分top结果数，默认为6
+     *   baike_num 返回百科信息的结果数，默认不返回
      * @return {Promise} - 标准Promise对象
      */
     animalDetect(image, options) {
@@ -182,6 +205,7 @@ class AipImageClassify extends BaseClient {
      * @param {string} image - 图像数据，base64编码，要求base64编码后大小不超过4M，最短边至少15px，最长边最大4096px,支持jpg/png/bmp格式
      * @param {Object} options - 可选参数对象，key: value都为string类型
      * @description options - options列表:
+     *   baike_num 返回百科信息的结果数，默认不返回
      * @return {Promise} - 标准Promise对象
      */
     plantDetect(image, options) {
@@ -205,6 +229,22 @@ class AipImageClassify extends BaseClient {
         let param = {
             image: image,
             targetPath: OBJECT_DETECT_PATH
+        };
+        return this.commonImpl(objectTools.merge(param, options));
+    }
+
+    /**
+     * 地标识别接口
+     *
+     * @param {string} image - 图像数据，base64编码，要求base64编码后大小不超过4M，最短边至少15px，最长边最大4096px,支持jpg/png/bmp格式
+     * @param {Object} options - 可选参数对象，key: value都为string类型
+     * @description options - options列表:
+     * @return {Promise} - 标准Promise对象
+     */
+    landmark(image, options) {
+        let param = {
+            image: image,
+            targetPath: LANDMARK_PATH
         };
         return this.commonImpl(objectTools.merge(param, options));
     }
